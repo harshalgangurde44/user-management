@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
+
 // const PORT = 5000;
 const app = express();
 app.use(cors());
@@ -367,6 +370,46 @@ app.delete("/employees/:id", (req, res) => {
   const { id } = req.params;
   employees = employees.filter((emp) => emp.id !== parseInt(id));
   res.json({ message: "Employee deleted" });
+});
+
+// Export Employee data
+app.get("/employees/export/:id", (req, res) => {
+  const { id } = req.params;
+
+  const employee = employees.find((emp) => emp.id === parseInt(id));
+
+  if (!employee) {
+    return res.status(404).json({ message: "Employee not found" });
+  }
+
+  const csvData = [
+    Object.keys(employee).join(","),
+    Object.values(employee)
+      .map((value) => String(value))
+      .join(","),
+  ].join("\n");
+
+  const tempFilePath = path.join(__dirname, `employee_${id}.csv`);
+
+  fs.writeFile(tempFilePath, csvData, (err) => {
+    if (err) {
+      console.error("Error writing CSV file:", err);
+      return res.status(500).json({ message: "Failed to generate CSV" });
+    }
+
+    res.download(tempFilePath, `employee_${id}.csv`, (err) => {
+      if (err) {
+        console.error("Error sending CSV file:", err);
+        return res.status(500).json({ message: "Failed to send CSV" });
+      }
+
+      fs.unlink(tempFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting temporary file:", err);
+        }
+      });
+    });
+  });
 });
 
 // Start the server
