@@ -26,6 +26,44 @@ const EmployeeRow = ({ employee, handleDelete }) => {
       .then(() => setEditable(false));
   };
 
+  const handleCancel = () => {
+    setFirstName(employee.first_name);
+    setLastName(employee.last_name);
+    setEmail(employee.email);
+    setGender(employee.gender);
+    setSalary(employee.salary);
+    setEditable(false);
+  };
+
+  const handleExport = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+
+    const fileName = `Employee_Data_${employee.id}_${year}-${month}-${day}.csv`;
+
+    axios
+      .get(`http://localhost:5000/employees/export/${employee.id}`, {
+        responseType: "blob",
+        headers: {
+          "Content-Type": "application/csv",
+        },
+      })
+      .then((response) => {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      })
+      .catch((error) => {
+        console.error("Error exporting CSV:", error);
+      });
+  };
+
   return (
     <tr>
       <td>
@@ -78,7 +116,12 @@ const EmployeeRow = ({ employee, handleDelete }) => {
           salary
         )}
       </td>
-      <td>
+      <td style={{ display: "flex", gap: "12px" }}>
+        {!editable && (
+          <button className="export" onClick={handleExport}>
+            Export
+          </button>
+        )}
         {editable ? (
           <button className="save" onClick={handleSave}>
             Save
@@ -88,9 +131,15 @@ const EmployeeRow = ({ employee, handleDelete }) => {
             Edit
           </button>
         )}
-        <button className="delete" onClick={() => handleDelete(employee.id)}>
-          Delete
-        </button>
+        {!editable ? (
+          <button className="delete" onClick={() => handleDelete(employee.id)}>
+            Delete
+          </button>
+        ) : (
+          <button className="cancel" onClick={() => handleCancel()}>
+            Cancel
+          </button>
+        )}
       </td>
     </tr>
   );

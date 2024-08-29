@@ -212,3 +212,13 @@ input[type="number"] {
   font-size: 12px;
   margin-top: 4px;
 }
+
+td button.cancel,
+td button.export {
+  background-color: #6063b9;
+}
+
+td button.cancel:hover,
+td button.export:hover {
+  background-color: #2d33c7;
+}
